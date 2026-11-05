@@ -1,0 +1,2 @@
+# earnsmart
+My earning website
