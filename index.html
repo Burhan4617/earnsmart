@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EarnSmart</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,sans-serif;
+ background:#f1f5f9;color:#172b45
+}
+header{
+ background:#142d48;color:white;
+ padding:20px;text-align:center
+}
+header h1{margin:0;color:#63dfb4}
+main{max-width:500px;margin:auto;padding:18px}
+.card{
+ background:white;padding:18px;margin:14px 0;
+ border-radius:14px;box-shadow:0 3px 12px #0001
+}
+h2{font-size:19px}
+input,button{
+ width:100%;padding:13px;margin:7px 0;
+ border-radius:9px;font-size:15px
+}
+input{border:1px solid #cbd5e1}
+button{
+ border:0;background:#147d64;color:white;
+ font-weight:bold;cursor:pointer
+}
+.secondary{background:#244b6c}
+.balance{
+ background:#142d48;color:white;
+ padding:24px;border-radius:14px
+}
+.balance h2{font-size:30px;color:#63dfb4}
+.small{font-size:12px;color:#64748b}
+.hidden{display:none}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{flex:1;font-size:12px}
+#message{color:#147d64}
+</style>
+</head>
+<body>
+<header>
+<h1>EarnSmart</h1>
+<p>Learn • Watch • Earn</p>
+</header>
+
+<main>
+<section id="auth" class="card">
+<h2>Welcome to EarnSmart</h2>
+<p>Create your demo account</p>
+<input id="name" placeholder="Your name">
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="register()">Create Account</button>
+<button class="secondary" onclick="login()">Login</button>
+<p id="message"></p>
+<p class="small">Demo only. Do not use real banking details.</p>
+</section>
+
+<section id="dashboard" class="hidden">
+<nav>
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('ads')">Ads</button>
+<button onclick="showPage('withdraw')">Withdraw</button>
+<button onclick="showPage('profile')">Profile</button>
+</nav>
+
+<div id="home" class="page">
+<div class="balance">
+<p>Welcome, <span id="userName"></span></p>
+<p>Demo balance</p>
+<h2 id="balance">$0.00</h2>
+<p>Demo credits only — no cash value</p>
+</div>
+<div class="card">
+<h2>My account</h2>
+<p>Account status: Demo</p>
+<p>Watch approved demo content below.</p>
+<button onclick="showPage('ads')">Explore Ads</button>
+</div>
+</div>
+
+<div id="ads" class="page hidden">
+<div class="card">
+<h2>Sponsored content demo</h2>
+<p>This is a sample advertisement area.</p>
+<p class="small">No real ad network is connected.</p>
+<button onclick="demoReward()">Complete demo activity</button>
+<p id="adMessage"></p>
+</div>
+</div>
+
+<div id="withdraw" class="page hidden">
+<div class="card">
+<h2>Demo withdrawal</h2>
+<p class="small">This form does not transfer money.</p>
+<input id="bankName" placeholder="Bank name (demo)">
+<input id="account" placeholder="Account holder (demo)">
+<input id="amount" type="number" placeholder="Demo amount">
+<button onclick="withdraw()">Submit demo request</button>
+<p id="withdrawMessage"></p>
+</div>
+</div>
+
+<div id="profile" class="page hidden">
+<div class="card">
+<h2>My profile</h2>
+<p id="profileEmail"></p>
+<button class="secondary" onclick="logout()">Logout</button>
+</div>
+</div>
+</section>
+</main>
+
+<script>
+let currentUser = null;
+let demoBalance = 0;
+
+function getUsers(){
+ try{return JSON.parse(localStorage.getItem("es_users")||"{}")}
+ catch(e){return {}}
+}
+function register(){
+ let n=document.getElementById("name").value.trim();
+ let e=document.getElementById("email").value.trim().toLowerCase();
+ let p=document.getElementById("password").value;
+ let users=getUsers();
+ if(!n||!e||p.length<6){
+  message("Enter your name, email and password (6+ characters).");
+  return;
+ }
+ if(users[e]){message("Account already exists. Please login.");return;}
+ users[e]={name:n,password:p};
+ localStorage.setItem("es_users",JSON.stringify(users));
+ currentUser=e;demoBalance=0;saveSession();openDashboard();
+}
+function login(){
+ let e=document.getElementById("email").value.trim().toLowerCase();
+ let p=document.getElementById("password").value;
+ let u=getUsers()[e];
+ if(!u||u.password!==p){message("Incorrect email or password.");return;}
+ currentUser=e;demoBalance=0;saveSession();openDashboard();
+}
+function message(t){document.getElementById("message").textContent=t;}
+function saveSession(){
+ localStorage.setItem("es_session",currentUser);
+ localStorage.setItem("es_balance_"+currentUser,String(demoBalance));
+}
+function openDashboard(){
+ let u=getUsers()[currentUser];
+ demoBalance=Number(localStorage.getItem("es_balance_"+currentUser)||0);
+ document.getElementById("auth").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ document.getElementById("userName").textContent=u.name;
+ document.getElementById("profileEmail").textContent=currentUser;
+ updateBalance();
+ showPage("home");
+}
+function updateBalance(){
+ document.getElementById("balance").textContent="$"+demoBalance.toFixed(2);
+}
+function showPage(id){
+ document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+}
+function demoReward(){
+ demoBalance+=0.10;
+ saveSession();updateBalance();
+ document.getElementById("adMessage").textContent=
+ "Demo activity complete. 10 demo cents added.";
+}
+function withdraw(){
+ let amount=Number(document.getElementById("amount").value);
+ if(!document.getElementById("bankName").value.trim()||
+ !document.getElementById("account").value.trim()||
+ amount<=0||amount>demoBalance){
+  document.getElementById("withdrawMessage").textContent=
+  "Enter valid demo details and amount.";
+  return;
+ }
+ document.getElementById("withdrawMessage").textContent=
+ "Demo request recorded. No real payment was made.";
+}
+function logout(){
+ localStorage.removeItem("es_session");
+ currentUser=null;
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("auth").classList.remove("hidden");
+}
+window.addEventListener("load",()=>{
+ let e=localStorage.getItem("es_session");
+ if(e&&getUsers()[e]){
+ currentUser=e;openDashboard();
+ }
+});
+</script>
+</body>
+</html>
